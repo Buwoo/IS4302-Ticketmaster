@@ -10,6 +10,23 @@ contract TicketMarketplace {
         TicketContract = Ticket(_TicketContract);
     }
 
+    function viewTicketsForSale(string memory eventName, uint categoryNo) public {
+    }
 
+    function viewPriceOfTicketOnSale(string memory eventName, uint categoryNo) public {
+
+    }
+
+    function viewMarketplaceCommission() public {
+
+    }
+
+    function listTicket(uint askingPrice) public {
+
+    }
+
+    function buyTicket(string memory eventName, uint categoryNo) public {
+
+    }
 }
 
