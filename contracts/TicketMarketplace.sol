@@ -70,12 +70,13 @@ contract TicketMarketplace {
         return allTickets;
     }
 
-    function viewPriceOfTicketOnSale(string memory eventName, uint categoryNo) public {
-
+    //function viewPriceOfTicketOnSale(string memory eventName, uint categoryNo) public {
+    function viewPriceOfTicketOnSale(uint256 ticketUUID) public view ticketExists(ticketUUID) returns(uint256) {
+        return Buyabletickets[ticketUUID];
     }
 
-    function viewMarketplaceCommission() public {
-
+    function viewMarketplaceCommission() public view returns (uint256) {
+        return upperBoundRatio;
     }
 }
 
