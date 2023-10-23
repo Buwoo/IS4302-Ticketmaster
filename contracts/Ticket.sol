@@ -13,13 +13,13 @@ contract Ticket is ERC721 {
     uint256 lastSoldTicketId; // This Id <= currentMintedTicketId
     uint256 totalTicketSupply; 
     uint256 category; 
-    uint256 ticketPrice; // in wei 
+    uint256 originalTicketPrice; // in wei 
     uint256 commissionFee; // in wei
 
+    // Extra information unique to each ticket 
     struct TicketInfo {
-        uint256 category; // Seat section/category: To decide if we want to include it in the smart contract
-        uint256 currTicketPrice; 
-        bool canBeResold; 
+        address originalTicketMinter; 
+        uint256 currTicketPrice;
     }
 
     mapping (uint256 => TicketInfo) tickets; 
@@ -29,7 +29,7 @@ contract Ticket is ERC721 {
         string memory _eventSymbol, 
         uint256 _totalTicketSupply, 
         uint256 _category, 
-        uint256 _ticketPrice, 
+        uint256 _originalTicketPrice, 
         uint256 _commissionFee) 
         ERC721(_eventName, _eventSymbol) {
 
@@ -40,7 +40,7 @@ contract Ticket is ERC721 {
         lastSoldTicketId = 0; 
         totalTicketSupply = _totalTicketSupply; 
         category = _category; 
-        ticketPrice = _ticketPrice;
+        originalTicketPrice = _originalTicketPrice;
         commissionFee = _commissionFee; 
     }
 
@@ -50,34 +50,65 @@ contract Ticket is ERC721 {
     }
 
     // Getter Functions
-    function getTicketPrice() public view returns (uint256) {
-        return ticketPrice; 
+    function getEventName() public view returns (string memory) {
+        return eventName; 
     }
+
+    function getEventSymbol() public view returns (string memory) {
+        return eventSymbol; 
+    }
+
+    function getCategory() public view returns (uint256) {
+        return category; 
+    }
+
+    function getOriginalTicketPrice() public view returns (uint256) {
+        return originalTicketPrice; 
+    }
+
+    function getCommissionFee() public view returns (uint256) {
+        return commissionFee; 
+    }
+
+    // to decide if we want to limit the usage of this function or make it public
+    function getCurrentTicketPrice(uint256 ticketId) public view returns (uint256) {
+        return tickets[ticketId].currTicketPrice;
+    }
+
+    // to check validity of ticket, the output address should be the ticketmaster address
+    function checkOriginalMinter(uint256 ticketId) public view returns (address) {
+        return tickets[ticketId].originalTicketMinter;
+    }
+
+    // to decide if we want to limit visibility, public for ease of testing sake rn 
+    function getOwnerOf(uint256 ticketId) public view returns (address) {
+        return ownerOf(ticketId);
+    }
+
 
     // Tickets start from ID = 1 
     // Main function to mint tickets 
-    function mintTicket(bool _canBeResold) onlyEventOrganiser public {
+    function mintTicket() onlyEventOrganiser public {
         require(currentMintedTicketId <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         currentMintedTicketId+=1;
         _mint(msg.sender, currentMintedTicketId);
         tickets[currentMintedTicketId] = TicketInfo({
-            category: category,
-            currTicketPrice: ticketPrice, 
-            canBeResold: _canBeResold
+            originalTicketMinter: msg.sender,
+            currTicketPrice: originalTicketPrice
         }); 
     }   
 
     // Allow for the bulk minting of tickets 
-    function bulkMintTickets(uint256 _nrOfTickets, bool _canBeResold) onlyEventOrganiser public {
+    function bulkMintTickets(uint256 _nrOfTickets) onlyEventOrganiser public {
         require(currentMintedTicketId + _nrOfTickets <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         for (uint i = 0; i < _nrOfTickets; i++) {
-            mintTicket(_canBeResold); 
+            mintTicket(); 
         }
     }
 
     // Purchase tix from the event organiser (official purchasing means)
     function buyTicket() public payable {
-        uint256 totalTicketPrice = ticketPrice + commissionFee; 
+        uint256 totalTicketPrice = originalTicketPrice + commissionFee; 
         require(msg.value >= totalTicketPrice, "Insufficient ETH to purchase ticket"); 
         require(lastSoldTicketId < currentMintedTicketId, "No tickets for sale");
         lastSoldTicketId+=1;
