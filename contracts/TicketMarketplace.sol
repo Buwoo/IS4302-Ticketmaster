@@ -64,18 +64,18 @@ contract TicketMarketplace {
         }
     }
 
-    function viewTicketsForSale(string memory eventName, uint categoryNo) public view returns(uint256[] memory) {
+    function getTicketsForSale(string memory eventName, uint categoryNo) public view returns(uint256[] memory) {
         //iterate through ticket to find tickets that 
         //TODO - how to search category number and eventName?
         return allTickets;
     }
 
     //function viewPriceOfTicketOnSale(string memory eventName, uint categoryNo) public {
-    function viewPriceOfTicketOnSale(uint256 ticketUUID) public view ticketExists(ticketUUID) returns(uint256) {
+    function getPriceOfTicketOnSale(uint256 ticketUUID) public view ticketExists(ticketUUID) returns(uint256) {
         return Buyabletickets[ticketUUID];
     }
 
-    function viewMarketplaceCommission() public view returns (uint256) {
+    function getMarketplaceCommission() public view returns (uint256) {
         return upperBoundRatio;
     }
 }

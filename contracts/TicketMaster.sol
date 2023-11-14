@@ -11,12 +11,12 @@ contract TicketMaster {
     // Note: allTicketAddresses must be input from Cat 1 to Last Cat 
     constructor(address[] memory _allTicketAddresses) {
         eventOrganiser = payable(msg.sender); 
-        for (uint i = 0; i < _allTicketAddresses.length; i++) {
+        for (uint i = buyTicket0; i < _allTicketAddresses.length; i++) {
             allTicketAddresses.push(Ticket(_allTicketAddresses[i])); 
         }
     }
 
-    function buyTicket(uint256 categoryNr) public payable {
+    function (uint256 categoryNr) public payable {
         require(categoryNr > 0 && categoryNr <= allTicketAddresses.length, "Invalid Category Number given");
         Ticket ticketContract = allTicketAddresses[categoryNr-1]; 
         ticketContract.buyTicket{value: msg.value}(); 
