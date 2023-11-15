@@ -4,19 +4,19 @@ pragma solidity ^0.8.20;
 
 import "./Ticket.sol";
 
-contract TicketMaster {
-    address payable eventOrganiser; 
-    Ticket[] allTicketAddresses; 
+contract TicketMaster { //one concert
+    address payable eventOrganiser; //hoster who will get the cash
+    Ticket[] allTicketAddresses; //a bunch of categories
 
     // Note: allTicketAddresses must be input from Cat 1 to Last Cat 
     constructor(address[] memory _allTicketAddresses) {
         eventOrganiser = payable(msg.sender); 
-        for (uint i = buyTicket0; i < _allTicketAddresses.length; i++) {
+        for (uint i = 0; i < _allTicketAddresses.length; i++) { 
             allTicketAddresses.push(Ticket(_allTicketAddresses[i])); 
         }
     }
 
-    function (uint256 categoryNr) public payable {
+    function buyTicket(uint256 categoryNr) public payable {
         require(categoryNr > 0 && categoryNr <= allTicketAddresses.length, "Invalid Category Number given");
         Ticket ticketContract = allTicketAddresses[categoryNr-1]; 
         ticketContract.buyTicket{value: msg.value}(); 
@@ -36,4 +36,13 @@ contract TicketMaster {
         return ticketContract.getEventName();
     }
 
+    //get all the tickets possible
+    function getTickets() public view returns(Ticket[] memory) {
+        return allTicketAddresses;
+    }
+
+    //get a ticket
+    function getTicket(uint256 cat) public view returns(Ticket) {
+        return allTicketAddresses[cat];
+    }
 }

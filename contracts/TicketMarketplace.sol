@@ -1,55 +1,72 @@
 // SPDX-License-Identifier: GPL-3.0
+
+/*
+Caveat - the marketplace can only work with one ticketmaster
+
+Something srsly wrong with the ticket marketplace 
+- One marketplace should not be taking on only one ticket
+- One marketplace should take multiple ticketMasters, of which should have its own rules
+- Can i get the ticketmaster and ticket contract through the UUID of a ticket - no you cannot! -> How to figure this out?
+- I need to input the ticket marketplace and ticket master 
+- Can i get the ticketmaster and ticket contract through the UUID of a ticket?
+
+*/
 pragma solidity ^0.8.20;
 
 import "./Ticket.sol";
+import "./TicketMaster.sol";
 
 contract TicketMarketplace {
     Ticket public TicketContract; 
-    mapping (uint256 => uint256) Buyabletickets; //ticketID -> ticketPrice
-    uint256 upperBoundRatio; //TOCHECK changed to ratio to allow this value to be used for all ticket prices of multiple categories
+    TicketMaster public TicketMasterContract; 
+    
+    mapping (uint => mapping (uint256 => uint256)) Buyabletickets; //cat->id->price
+    uint256 upperBoundRatio;
     uint256[] allTickets; //to keep track of all tickets available
 
-    constructor(address _TicketContract, uint256 maxPrice) {
-        TicketContract = Ticket(_TicketContract);    
+    constructor(address _TicketMasterContract, uint256 maxPrice) {
+        TicketContract = Ticket(_TicketMasterContract);    
+        TicketMasterContract = TicketMaster(_TicketMasterContract);  
         upperBoundRatio = maxPrice;
     }
 
     //check for FAIR ticket pricing
-    modifier priceSufficient(uint256 askingPrice, uint256 maxPriceRatio, uint256 ticketUUID) {
-        require(askingPrice >= ticketUUID * maxPriceRatio, "nice try bloke go take your scams somewhere else!"); //TODO get the OG price of ticketID instead of [ticketUUID]
+    modifier priceSufficient(uint256 askingPrice, uint256 maxPriceRatio, uint256 ticketUUID, uint256 cat) {
+        require(askingPrice >= TicketMasterContract.getTicket(cat).getOriginalTicketPrice(), "nice try bloke - go take your scams somewhere else!");
         _;
     }
 
     //check for ownership of a ticket
     modifier ownerOnly(address senderAddress, uint256 ticketUUID) {
-        require(ticketUUID > 0, "try owning a ticket bloke!"); //TODO get the owner of the ticket instead of the placeholder!
+        require(msg.sender == TicketContract.getOwnerOf(ticketUUID)); 
         _;
     }
     
-    modifier ticketExists(uint256 ticketUUID) {
-        require(Buyabletickets[ticketUUID] != 0, "who's ticket are you trying to buy you FOOL?");//TODO - ensure that 0 is not a valid ticket price
+    //check that the ticket exists
+    modifier ticketExists(uint256 ticketUUID, uint cat) {
+        require(Buyabletickets[cat][ticketUUID] != 0, "who's ticket are you trying to buy you FOOL?");
         _;
     }
 
     //ensure that enough money is spent on buying the ticket
-    modifier sufficientValue(uint256 ticketUUID, uint256 value) {
-        require(Buyabletickets[ticketUUID] > value, "get your broke ass outta here");
+    modifier sufficientValue(uint256 ticketUUID, uint256 value, uint cat) {
+        require(Buyabletickets[cat][ticketUUID] > value, "get your broke ass outta here");
         _;
     }
 
-    function listTicket(uint256 askingPrice, uint256 ticketUUID) public priceSufficient(askingPrice, upperBoundRatio, ticketUUID) ownerOnly(msg.sender, ticketUUID) {
-        Buyabletickets[ticketUUID] = askingPrice;
+    //list the ticket on the marketplace
+    function listTicket(uint256 askingPrice, uint256 ticketUUID, uint cat) public priceSufficient(askingPrice, upperBoundRatio, ticketUUID, cat) ownerOnly(msg.sender, ticketUUID) {
+        Buyabletickets[cat][ticketUUID] = askingPrice;
         allTickets.push(ticketUUID);
     }
 
     //function buyTicket(string memory eventName, uint categoryNo) public { //do we not want them to specify a precise ticket? - if not how does cost resolve?
-    function buyTicket(uint256 ticketUUID) public payable ticketExists(ticketUUID) sufficientValue(ticketUUID, msg.value) { 
-        uint256 price = Buyabletickets[ticketUUID];
-        address payable recepient = payable(msg.sender); //TODO - how do i get the ticket owner - replace placeholder msg.sender?
-        //make payment
-        recepient.transfer(price);
-        //TODO - make ticket transfer
-        Buyabletickets[ticketUUID] = 0; //set the ticket status to invalid
+    function buyTicket(uint256 ticketUUID, uint cat) public payable ticketExists(ticketUUID,cat) sufficientValue(ticketUUID, msg.value, cat) { 
+        uint256 price = Buyabletickets[cat][ticketUUID];
+        address payable recepient = payable(TicketContract.getOwnerOf(ticketUUID)); //get ticket owner        
+        recepient.transfer(price); //make payment
+        TicketContract.transferToken(recepient, msg.sender, ticketUUID); //transfer ticket
+        Buyabletickets[cat][ticketUUID] = 0; //set the ticket status to invalid
         removeElement(ticketUUID);
     }
 
@@ -64,19 +81,17 @@ contract TicketMarketplace {
         }
     }
 
-    function getTicketsForSale(string memory eventName, uint categoryNo) public view returns(uint256[] memory) {
-        //iterate through ticket to find tickets that 
-        //TODO - how to search category number and eventName?
+    //TODO - return all tickets for sale, id cat and price + function overload
+    function getTicketsForSale() public view returns(uint256[] memory) {
         return allTickets;
     }
 
     //function viewPriceOfTicketOnSale(string memory eventName, uint categoryNo) public {
-    function getPriceOfTicketOnSale(uint256 ticketUUID) public view ticketExists(ticketUUID) returns(uint256) {
-        return Buyabletickets[ticketUUID];
+    function getPriceOfTicketOnSale(uint256 ticketUUID, uint cat) public view ticketExists(ticketUUID, cat) returns(uint256) {
+        return Buyabletickets[cat][ticketUUID];
     }
 
     function getMarketplaceCommission() public view returns (uint256) {
         return upperBoundRatio;
     }
 }
-

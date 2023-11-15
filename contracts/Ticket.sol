@@ -20,7 +20,7 @@ contract Ticket is ERC721 {
     struct TicketInfo {
         address originalTicketMinter; 
         uint256 currTicketPrice;
-    }
+    } 
 
     mapping (uint256 => TicketInfo) tickets; 
 
@@ -85,7 +85,6 @@ contract Ticket is ERC721 {
         return ownerOf(ticketId);
     }
 
-
     // Tickets start from ID = 1 
     // Main function to mint tickets 
     function mintTicket() onlyEventOrganiser public {
@@ -98,12 +97,20 @@ contract Ticket is ERC721 {
         }); 
     }   
 
-    // Allow for the bulk minting of tickets 
+    // Allow for the bulk minting of tickets - after u mint a bunch of ticket where does it go?
     function bulkMintTickets(uint256 _nrOfTickets) onlyEventOrganiser public {
         require(currentMintedTicketId + _nrOfTickets <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         for (uint i = 0; i < _nrOfTickets; i++) {
             mintTicket(); 
         }
+    }
+
+    function transferToken(address from, address to, uint256 tokenId) external {
+        // Check if the caller is the owner of the token
+        require(ownerOf(tokenId) == from, "Not the token owner");
+
+        // Transfer the token to the new owner
+        _transfer(from, to, tokenId);
     }
 
     // Purchase tix from the event organiser (official purchasing means)
