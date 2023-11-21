@@ -9,8 +9,8 @@ Something srsly wrong with the ticket marketplace
 - Can i get the ticketmaster and ticket contract through the UUID of a ticket - no you cannot! -> How to figure this out?
 - I need to input the ticket marketplace and ticket master 
 - Can i get the ticketmaster and ticket contract through the UUID of a ticket?
-
 */
+
 pragma solidity ^0.8.20;
 
 import "./Ticket.sol";
@@ -44,7 +44,7 @@ contract TicketMarketplace {
     
     //check that the ticket exists
     modifier ticketExists(uint256 ticketUUID, uint cat) {
-        require(Buyabletickets[cat][ticketUUID] != 0, "who's ticket are you trying to buy you FOOL?");
+        require(Buyabletickets[cat][ticketUUID] != 0, "who s ticket are you trying to buy you FOOL?");
         _;
     }
 
