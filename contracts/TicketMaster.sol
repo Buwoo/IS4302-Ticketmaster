@@ -16,15 +16,25 @@ contract TicketMaster { //one concert
         }
     }
 
+    //get all ticket contract addresses 
+    function getAllTicketAddresses() public view returns(Ticket[] memory) {
+        return allTicketAddresses;
+    }
+
+    //get the ticket contract address for a specific category
+    function getSpecificTicketAddress(uint256 categoryNr) public view returns(Ticket) {
+        return allTicketAddresses[categoryNr-1];
+    }
+
     function buyTicket(uint256 categoryNr) public payable {
         require(categoryNr > 0 && categoryNr <= allTicketAddresses.length, "Invalid Category Number given");
-        Ticket ticketContract = allTicketAddresses[categoryNr-1]; 
-        ticketContract.buyTicket{value: msg.value}(); 
+        Ticket ticketContract = getSpecificTicketAddress(categoryNr);
+        ticketContract.buyTicket{value: msg.value}(payable(msg.sender)); 
         // This strangely doesnt work, but idea is that based on given category, we call the appropriate smart contract and buy the ticket 
     }
 
     function findOwner(uint256 categoryNr, uint256 ticketId) public view returns (address) {
-        Ticket ticketContract = allTicketAddresses[categoryNr-1]; 
+        Ticket ticketContract = getSpecificTicketAddress(categoryNr);
         return ticketContract.getOwnerOf(ticketId); 
     }
 
@@ -34,15 +44,5 @@ contract TicketMaster { //one concert
     function findEventName() public view returns (string memory) {
         Ticket ticketContract = allTicketAddresses[0]; 
         return ticketContract.getEventName();
-    }
-
-    //get all the tickets possible
-    function getTickets() public view returns(Ticket[] memory) {
-        return allTicketAddresses;
-    }
-
-    //get a ticket
-    function getTicket(uint256 cat) public view returns(Ticket) {
-        return allTicketAddresses[cat];
     }
 }
