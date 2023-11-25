@@ -19,10 +19,11 @@ contract Ticket is ERC721 {
     // Extra information unique to each ticket 
     struct TicketInfo {
         address originalTicketMinter; 
+        address prevOwner; 
         uint256 currTicketPrice;
-    } 
+    }
 
-    mapping (uint256 => TicketInfo) tickets; 
+    mapping (uint256 => TicketInfo) public tickets; 
 
     constructor(
         string memory _eventName, 
@@ -85,6 +86,21 @@ contract Ticket is ERC721 {
         return ownerOf(ticketId);
     }
 
+    // to get ticket's previous owner
+    function getPrevOwner(uint256 ticketId) public view returns (address) {
+        return tickets[ticketId].prevOwner;
+    }
+
+    // change currentTicketPrice 
+    function changeCurrentTicketPrice(uint256 ticketId, uint256 newTicketPrice) external {
+        tickets[ticketId].currTicketPrice = newTicketPrice;
+    }
+
+    // // change prevOwner  
+    // function changePrevOwner(uint256 ticketId, address updatePrevOwner) external {
+    //     tickets[ticketId].prevOwner = updatePrevOwner;
+    // }
+
     // Tickets start from ID = 1 
     // Main function to mint tickets 
     function mintTicket() onlyEventOrganiser public {
@@ -93,11 +109,12 @@ contract Ticket is ERC721 {
         _mint(msg.sender, currentMintedTicketId);
         tickets[currentMintedTicketId] = TicketInfo({
             originalTicketMinter: msg.sender,
+            prevOwner: address(0), 
             currTicketPrice: originalTicketPrice
         }); 
     }   
 
-    // Allow for the bulk minting of tickets - after u mint a bunch of ticket where does it go?
+    // Allow for the bulk minting of tickets 
     function bulkMintTickets(uint256 _nrOfTickets) onlyEventOrganiser public {
         require(currentMintedTicketId + _nrOfTickets <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         for (uint i = 0; i < _nrOfTickets; i++) {
@@ -105,23 +122,22 @@ contract Ticket is ERC721 {
         }
     }
 
-    function transferToken(address from, address to, uint256 tokenId) external {
-        // Check if the caller is the owner of the token
-        require(ownerOf(tokenId) == from, "Not the token owner");
-
-        // Transfer the token to the new owner
-        _transfer(from, to, tokenId);
+    function transferTicket(address from, address to, uint256 ticketId) external {
+        require(ownerOf(ticketId) == from, "Not the ticket owner"); // check if the caller is the owner of the ticket
+        _safeTransfer(from, to, ticketId); // transfer the ticket to the new owner
+        tickets[ticketId].prevOwner = from; // update prev owner 
     }
 
     // Purchase tix from the event organiser (official purchasing means)
-    function buyTicket() public payable {
+    function buyTicket(address given_address) public payable {
         uint256 totalTicketPrice = originalTicketPrice + commissionFee; 
         require(msg.value >= totalTicketPrice, "Insufficient ETH to purchase ticket"); 
         require(lastSoldTicketId < currentMintedTicketId, "No tickets for sale");
         lastSoldTicketId+=1;
         eventOrganiser.transfer(totalTicketPrice);
-        payable(msg.sender).transfer(msg.value - totalTicketPrice); //Return the excess Ether if too much was provided 
-        _safeTransfer(eventOrganiser, msg.sender, lastSoldTicketId); //transfer ticket ownership to purchasing party 
+        payable(given_address).transfer(msg.value - totalTicketPrice); //Return the excess Ether if too much was provided 
+        _safeTransfer(eventOrganiser, given_address, lastSoldTicketId); //transfer ticket ownership to purchasing party 
+        tickets[lastSoldTicketId].prevOwner = eventOrganiser; // update prev owner 
     }
     
 }

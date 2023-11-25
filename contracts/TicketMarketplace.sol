@@ -1,97 +1,94 @@
 // SPDX-License-Identifier: GPL-3.0
 
-/*
-Caveat - the marketplace can only work with one ticketmaster
-
-Something srsly wrong with the ticket marketplace 
-- One marketplace should not be taking on only one ticket
-- One marketplace should take multiple ticketMasters, of which should have its own rules
-- Can i get the ticketmaster and ticket contract through the UUID of a ticket - no you cannot! -> How to figure this out?
-- I need to input the ticket marketplace and ticket master 
-- Can i get the ticketmaster and ticket contract through the UUID of a ticket?
-*/
-
 pragma solidity ^0.8.20;
 
 import "./Ticket.sol";
 import "./TicketMaster.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract TicketMarketplace {
-    Ticket public TicketContract; 
+contract TicketMarketplace is IERC721Receiver {
     TicketMaster public TicketMasterContract; 
     
-    mapping (uint => mapping (uint256 => uint256)) Buyabletickets; //cat->id->price
-    uint256 upperBoundRatio;
-    uint256[] allTickets; //to keep track of all tickets available
+    mapping (uint => mapping (uint256 => uint256)) listedTicketMapping; // cat->id->price (if price = 0, means delisted) 
+    uint256 upperBoundRatio; // given as percentage. 100 means can resell at maximum of 100% original price. 
+    bool allowReselling; // if resell is allowed, set to True
 
-    constructor(address _TicketMasterContract, uint256 maxPrice) {
-        TicketContract = Ticket(_TicketMasterContract);    
+    constructor(address _TicketMasterContract, uint256 _upperBoundRatio, bool _allowReselling) {
         TicketMasterContract = TicketMaster(_TicketMasterContract);  
-        upperBoundRatio = maxPrice;
+        upperBoundRatio = _upperBoundRatio; 
+        allowReselling = _allowReselling; 
     }
 
-    //check for FAIR ticket pricing
-    modifier priceSufficient(uint256 askingPrice, uint256 maxPriceRatio, uint256 ticketUUID, uint256 cat) {
-        require(askingPrice >= TicketMasterContract.getTicket(cat).getOriginalTicketPrice(), "nice try bloke - go take your scams somewhere else!");
+    // check for FAIR ticket pricing
+    modifier priceSufficient(uint256 askingPrice, uint256 categoryNr, uint256 ticketId) {
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        require(askingPrice <= ticketContract.getOriginalTicketPrice()*(upperBoundRatio/100), "Reselling above price ceiling is not allowed");
         _;
     }
+
+    // check if reselling is allowed 
+    modifier checkResellAllowed() {
+        require(allowReselling, "Reselling is not allowed");
+        _;
+    }    
 
     //check for ownership of a ticket
-    modifier ownerOnly(address senderAddress, uint256 ticketUUID) {
-        require(msg.sender == TicketContract.getOwnerOf(ticketUUID)); 
+    modifier ownerOnly(uint256 categoryNr, uint256 ticketId) {
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        require(msg.sender == ticketContract.getOwnerOf(ticketId)); 
         _;
+    }
+
+    //check for prev ownership of a ticket (specifically for delisting) 
+    modifier prevOwnerOnly(uint256 categoryNr, uint256 ticketId) {
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        require(msg.sender == ticketContract.getPrevOwner(ticketId)); 
+        _;
+    }
+
+    // check if ticket is listed 
+    modifier ticketIsListed(uint256 categoryNr, uint256 ticketId) {
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        require(address(this) == ticketContract.getOwnerOf(ticketId)); 
+        _;     
+    }
+
+    // List Ticket 
+    function listTicket(uint256 askingPrice, uint256 categoryNr, uint256 ticketId) public checkResellAllowed() priceSufficient(askingPrice, categoryNr, ticketId) ownerOnly(categoryNr, ticketId) {
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        listedTicketMapping[categoryNr][ticketId] = askingPrice; // set the ticket asking price for the marketplace
+        ticketContract.transferTicket(msg.sender, address(this), ticketId); // transfer ticket ownership to marketplace 
+    }
+
+    // Delist Ticket 
+    function delistTicket(uint256 categoryNr, uint256 ticketId) public prevOwnerOnly(categoryNr, ticketId) ticketIsListed(categoryNr, ticketId) {
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        listedTicketMapping[categoryNr][ticketId] = 0; // set price to 0 to signify delisted 
+        ticketContract.transferTicket(address(this), msg.sender, ticketId); // transfer ticket ownership back to prev owner 
+    }
+
+    // Get Specified Ticket's Price 
+    // To get the lowest ticketprice, we will for loop outside the smart contract over all the ticketids to 
+    // find the cheapest ticket for a specific cat 
+    function getTicketPrice(uint256 categoryNr, uint256 ticketId) public view returns(uint256) {
+        return listedTicketMapping[categoryNr][ticketId];
+    }
+
+    // Buy Ticket 
+    function buyTicket(uint256 categoryNr, uint256 ticketId) public payable ticketIsListed(categoryNr, ticketId) {
+        uint256 ticketPrice = getTicketPrice(categoryNr, ticketId);
+        require(msg.value >= ticketPrice, "Insufficient ETH to purchase ticket"); 
+        Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
+        address payable prevOwner = payable(ticketContract.getPrevOwner(ticketId)); 
+        require(msg.sender != prevOwner, "Cannot buy back the ticket you've listed"); // Shouldnt be buy back, should just delist
+        prevOwner.transfer(ticketPrice);
+        payable(msg.sender).transfer(msg.value - ticketPrice); //Return the excess Ether if too much was provided 
+        ticketContract.transferTicket(address(this), msg.sender, ticketId); //transfer ticket ownership from marketplace to purchasing party         
+    }
+
+    // Placeholder function to implement to ensure smart contract can receive NFT tokens 
+    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data) external returns(bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
     }
     
-    //check that the ticket exists
-    modifier ticketExists(uint256 ticketUUID, uint cat) {
-        require(Buyabletickets[cat][ticketUUID] != 0, "who s ticket are you trying to buy you FOOL?");
-        _;
-    }
-
-    //ensure that enough money is spent on buying the ticket
-    modifier sufficientValue(uint256 ticketUUID, uint256 value, uint cat) {
-        require(Buyabletickets[cat][ticketUUID] > value, "get your broke ass outta here");
-        _;
-    }
-
-    //list the ticket on the marketplace
-    function listTicket(uint256 askingPrice, uint256 ticketUUID, uint cat) public priceSufficient(askingPrice, upperBoundRatio, ticketUUID, cat) ownerOnly(msg.sender, ticketUUID) {
-        Buyabletickets[cat][ticketUUID] = askingPrice;
-        allTickets.push(ticketUUID);
-    }
-
-    //function buyTicket(string memory eventName, uint categoryNo) public { //do we not want them to specify a precise ticket? - if not how does cost resolve?
-    function buyTicket(uint256 ticketUUID, uint cat) public payable ticketExists(ticketUUID,cat) sufficientValue(ticketUUID, msg.value, cat) { 
-        uint256 price = Buyabletickets[cat][ticketUUID];
-        address payable recepient = payable(TicketContract.getOwnerOf(ticketUUID)); //get ticket owner        
-        recepient.transfer(price); //make payment
-        TicketContract.transferToken(recepient, msg.sender, ticketUUID); //transfer ticket
-        Buyabletickets[cat][ticketUUID] = 0; //set the ticket status to invalid
-        removeElement(ticketUUID);
-    }
-
-    //remove ticketUUID from the public list
-    function removeElement(uint256 ticketUUID) public {
-        for (uint256 i = 0; i < allTickets.length; i++) {
-            if (allTickets[i] == ticketUUID) {
-                allTickets[i] = allTickets[allTickets.length - 1];
-                allTickets.pop();
-                break;
-            }
-        }
-    }
-
-    //TODO - return all tickets for sale, id cat and price + function overload
-    function getTicketsForSale() public view returns(uint256[] memory) {
-        return allTickets;
-    }
-
-    //function viewPriceOfTicketOnSale(string memory eventName, uint categoryNo) public {
-    function getPriceOfTicketOnSale(uint256 ticketUUID, uint cat) public view ticketExists(ticketUUID, cat) returns(uint256) {
-        return Buyabletickets[cat][ticketUUID];
-    }
-
-    function getMarketplaceCommission() public view returns (uint256) {
-        return upperBoundRatio;
-    }
 }
