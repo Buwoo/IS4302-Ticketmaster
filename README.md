@@ -1,4 +1,4 @@
-[![Solidity Version](https://img.shields.io/badge/Solidity-0.8.0-blue.svg)](https://solidity.readthedocs.io/)
+[![Solidity Version](https://img.shields.io/badge/Solidity-0.8.20-blue.svg)](https://solidity.readthedocs.io/)
 
 # IS4302-Ticketmaster
 
