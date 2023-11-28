@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 
 import "./Ticket.sol";
 
-contract TicketMaster { //one concert
-    address payable eventOrganiser; //hoster who will get the cash
-    Ticket[] allTicketAddresses; //a bunch of categories
+contract TicketMaster { // a single event/concert
+    address payable eventOrganiser; // hoster who will get the cash
+    Ticket[] allTicketAddresses; // a bunch of categories
 
-    // Note: allTicketAddresses must be input from Cat 1 to Last Cat 
+    // Note: allTicketAddresses must be input from Cat 1 to Last Cat in ascending order
     constructor(address[] memory _allTicketAddresses) {
         eventOrganiser = payable(msg.sender); 
         for (uint i = 0; i < _allTicketAddresses.length; i++) { 
@@ -16,12 +16,12 @@ contract TicketMaster { //one concert
         }
     }
 
-    //get all ticket contract addresses 
+    // get all ticket contract addresses
     function getAllTicketAddresses() public view returns(Ticket[] memory) {
         return allTicketAddresses;
     }
 
-    //get the ticket contract address for a specific category
+    // get the ticket contract address for a specific category
     function getSpecificTicketAddress(uint256 categoryNr) public view returns(Ticket) {
         return allTicketAddresses[categoryNr-1];
     }
@@ -30,7 +30,6 @@ contract TicketMaster { //one concert
         require(categoryNr > 0 && categoryNr <= allTicketAddresses.length, "Invalid Category Number given");
         Ticket ticketContract = getSpecificTicketAddress(categoryNr);
         ticketContract.buyTicket{value: msg.value}(payable(msg.sender)); 
-        // This strangely doesnt work, but idea is that based on given category, we call the appropriate smart contract and buy the ticket 
     }
 
     function findOwner(uint256 categoryNr, uint256 ticketId) public view returns (address) {

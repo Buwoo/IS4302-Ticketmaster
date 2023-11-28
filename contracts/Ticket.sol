@@ -6,6 +6,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol";
 
 contract Ticket is ERC721 {
+    // Information common to each ticket
     address payable eventOrganiser; 
     string eventName; 
     string eventSymbol; 
@@ -23,6 +24,7 @@ contract Ticket is ERC721 {
         uint256 currTicketPrice;
     }
 
+    // Information for each id
     mapping (uint256 => TicketInfo) public tickets; 
 
     constructor(
@@ -76,7 +78,7 @@ contract Ticket is ERC721 {
         return tickets[ticketId].currTicketPrice;
     }
 
-    // to check validity of ticket, the output address should be the ticketmaster address
+    // For checking ticket authenticity, the output address should be the ticketmaster address
     function checkOriginalMinter(uint256 ticketId) public view returns (address) {
         return tickets[ticketId].originalTicketMinter;
     }
@@ -86,7 +88,6 @@ contract Ticket is ERC721 {
         return ownerOf(ticketId);
     }
 
-    // to get ticket's previous owner
     function getPrevOwner(uint256 ticketId) public view returns (address) {
         return tickets[ticketId].prevOwner;
     }
@@ -123,21 +124,31 @@ contract Ticket is ERC721 {
     }
 
     function transferTicket(address from, address to, uint256 ticketId) external {
-        require(ownerOf(ticketId) == from, "Not the ticket owner"); // check if the caller is the owner of the ticket
-        _safeTransfer(from, to, ticketId); // transfer the ticket to the new owner
-        tickets[ticketId].prevOwner = from; // update prev owner 
+        require(ownerOf(ticketId) == from, "Not the ticket owner");
+
+        // Transfer the ticket to the new owner
+        _safeTransfer(from, to, ticketId);
+
+        // Update previous owner
+        tickets[ticketId].prevOwner = from;
     }
 
-    // Purchase tix from the event organiser (official purchasing means)
+    // Purchase ticket from the event organiser (official purchasing means)
     function buyTicket(address given_address) public payable {
         uint256 totalTicketPrice = originalTicketPrice + commissionFee; 
         require(msg.value >= totalTicketPrice, "Insufficient ETH to purchase ticket"); 
         require(lastSoldTicketId < currentMintedTicketId, "No tickets for sale");
-        lastSoldTicketId+=1;
+        lastSoldTicketId += 1;
         eventOrganiser.transfer(totalTicketPrice);
-        payable(given_address).transfer(msg.value - totalTicketPrice); //Return the excess Ether if too much was provided 
-        _safeTransfer(eventOrganiser, given_address, lastSoldTicketId); //transfer ticket ownership to purchasing party 
-        tickets[lastSoldTicketId].prevOwner = eventOrganiser; // update prev owner 
+
+        // Return the excess Ether if too much was provided
+        payable(given_address).transfer(msg.value - totalTicketPrice); 
+
+        // Transfer ticket ownership to purchasing party 
+        _safeTransfer(eventOrganiser, given_address, lastSoldTicketId);
+
+        // Update previous owner
+        tickets[lastSoldTicketId].prevOwner = eventOrganiser;
     }
     
 }
