@@ -54,6 +54,17 @@ npm install --save-dev hardhat
 npx hardhat init
 ```
 
+## Testing on Remix IDE
+1. **Test primary sale**
+
+2. **Test secondary sale**
+
+3. **Test upperBoundRatio**
+
+4. **Test allowReselling**
+
+
+
 ## License
 
 This project is licensed under the [MIT](https://spdx.org/licenses/GPL-3.0.html) License
