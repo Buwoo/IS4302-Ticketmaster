@@ -6,13 +6,15 @@
 
 In the realm of ticketing sale and resale, customers encounter two primary challenges.
 
-- Firstly, this revolves around the issue of transaction fees, which can manifest as undisclosed commissions and concealed costs integrated into the total ticket price as it moves from the initial creators, through intermediaries, and ultimately to the end consumers.
+- Firstly, it revolves around the issue of transaction fees, which manifests as undisclosed commissions and concealed costs integrated into the overall ticket price as we traverse down the ticket lifecycle.
 
-- Secondly, it pertains to the infiltration of malicious bots in the ticket purchasing process. These bots are used for scalping, to acquire tickets in large quantities, preventing concert fans who actually want to go for these concerts from getting the tickets. Scalper would subsequently resell them on a secondary market at substantially inflated prices.
+- Secondly, it pertains to the infiltration of malicious bots in the ticketing process. These bots are used for scalping, where tickets are acquired in large quantities. This prevents concert fans who actually want to go for these concerts from getting them. Scalpers could subsequently resell them on a secondary market at substantially inflated prices in order to reap a quick profit.
 
 Henceforth, this project seeks to introduce the application of blockchain technology as the panacea that addresses the pain points that customers face in the ticketing journey. Please refer the steps and instructions below for more clarity on the usage.
 
 ## Contracts
+
+Our blockchain application operates on the premise of 3 smart contracts that are detailed further below:
 
 1. **Ticket.sol:**
    Builds upon the existing ERC-721 (NFT) framework provided by the OpenZeppelin library. This contract contains functions that allow the transfer and ownership of these ERC tokens as Tickets. The ERC-721 framework was used such that each created NFT ticket will be unique and remain as collectibles at the end of the event. All tickets minted within this smart contract are for the same event and seat categories. The ticket contains multiple shared attributes which are uniform across all tickets created from this smart contract, including the event name, event symbol, category number, event organizer address, original ticket price, total ticket supply etc. Besides getter functions, there are also key functions like mintTicket and bulkMintTickets that create new ticket(s), and buyTicket that allow the sale of tickets from the main ticketing organizer to event patrons.
@@ -38,12 +40,6 @@ cd IS4302-Ticketmaster
 npm install
 ```
 
-#### Running the application
-
-```bash
-FILL THIS UP
-```
-
 #### Unit testing using Hardhat
 
 Use the package manager [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) to install npm and Node.js. Once npm and Node.js is installed, run the following code to install hardhat
@@ -55,6 +51,7 @@ npx hardhat init
 ```
 
 ## Testing on Remix IDE
+
 1. **Test primary sale**
 
 2. **Test secondary sale**
@@ -62,8 +59,6 @@ npx hardhat init
 3. **Test upperBoundRatio**
 
 4. **Test allowReselling**
-
-
 
 ## License
 
