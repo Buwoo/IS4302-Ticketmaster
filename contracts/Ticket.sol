@@ -105,8 +105,8 @@ contract Ticket is ERC721 {
     // Tickets start from ID = 1 
     // Main function to mint tickets 
     function mintTicket() onlyEventOrganiser public {
-        require(currentMintedTicketId <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         currentMintedTicketId+=1;
+        require(currentMintedTicketId <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         _mint(msg.sender, currentMintedTicketId);
         tickets[currentMintedTicketId] = TicketInfo({
             originalTicketMinter: msg.sender,
