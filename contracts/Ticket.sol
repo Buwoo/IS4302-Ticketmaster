@@ -14,8 +14,8 @@ contract Ticket is ERC721 {
     uint256 lastSoldTicketId; // This Id <= currentMintedTicketId
     uint256 totalTicketSupply; 
     uint256 category; 
-    uint256 originalTicketPrice; // in wei 
-    uint256 commissionFee; // in wei
+    uint256 originalTicketPrice;
+    uint256 commissionFee;
 
     // Extra information unique to each ticket 
     struct TicketInfo {
@@ -52,6 +52,11 @@ contract Ticket is ERC721 {
         _; 
     }
 
+    modifier ticketIdExists(uint256 ticketId) {
+        require(ticketId <= currentMintedTicketId, "This ticketId does not exist");
+        _; 
+    }
+
     // Getter Functions
     function getEventName() public view returns (string memory) {
         return eventName; 
@@ -74,26 +79,26 @@ contract Ticket is ERC721 {
     }
 
     // to decide if we want to limit the usage of this function or make it public
-    function getCurrentTicketPrice(uint256 ticketId) public view returns (uint256) {
+    function getCurrentTicketPrice(uint256 ticketId) ticketIdExists(ticketId) public view returns (uint256) {
         return tickets[ticketId].currTicketPrice;
     }
 
     // For checking ticket authenticity, the output address should be the ticketmaster address
-    function checkOriginalMinter(uint256 ticketId) public view returns (address) {
+    function checkOriginalMinter(uint256 ticketId) ticketIdExists(ticketId) public view returns (address) {
         return tickets[ticketId].originalTicketMinter;
     }
 
     // to decide if we want to limit visibility, public for ease of testing sake rn 
-    function getOwnerOf(uint256 ticketId) public view returns (address) {
+    function getOwnerOf(uint256 ticketId) ticketIdExists(ticketId) public view returns (address) {
         return ownerOf(ticketId);
     }
 
-    function getPrevOwner(uint256 ticketId) public view returns (address) {
+    function getPrevOwner(uint256 ticketId) ticketIdExists(ticketId) public view returns (address) {
         return tickets[ticketId].prevOwner;
     }
 
     // change currentTicketPrice 
-    function changeCurrentTicketPrice(uint256 ticketId, uint256 newTicketPrice) external {
+    function changeCurrentTicketPrice(uint256 ticketId, uint256 newTicketPrice) ticketIdExists(ticketId) external {
         tickets[ticketId].currTicketPrice = newTicketPrice;
     }
 
@@ -105,21 +110,22 @@ contract Ticket is ERC721 {
     // Tickets start from ID = 1 
     // Main function to mint tickets 
     function mintTicket() onlyEventOrganiser public {
-        currentMintedTicketId+=1;
-        require(currentMintedTicketId <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
+        require(currentMintedTicketId < totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
+        
+        currentMintedTicketId += 1;
         _mint(msg.sender, currentMintedTicketId);
         tickets[currentMintedTicketId] = TicketInfo({
             originalTicketMinter: msg.sender,
             prevOwner: address(0), 
             currTicketPrice: originalTicketPrice
-        }); 
+        });
     }   
 
     // Allow for the bulk minting of tickets 
     function bulkMintTickets(uint256 _nrOfTickets) onlyEventOrganiser public {
-        require(currentMintedTicketId + _nrOfTickets <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
+        require(currentMintedTicketId + _nrOfTickets < totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         for (uint i = 0; i < _nrOfTickets; i++) {
-            mintTicket(); 
+            mintTicket();
         }
     }
 

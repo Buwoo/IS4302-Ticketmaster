@@ -44,13 +44,72 @@ npm install
 
 ## Testing on Remix IDE
 
-1. **Test primary sale**
+3 addresses: 
+- event organiser 1/admin, initialising Tickets, TicketMaster, and TicketMarketplace
+- customer A
+- customer B 
 
-2. **Test secondary sale**
+note: the way we designed it, each Ticket, TicketMaster, and TicketMasterplace is for 1 concert
 
-3. **Test upperBoundRatio**
 
-4. **Test allowReselling**
+1. **Create 2 Ticket contracts of different categories**
+using event organiser 1, initialise:
+Ticket 1: (Taylor Swift 5 Dec, TS0512, 1, 1, 80, 10)
+for one of the categories, set totalSupply to 1 for demonstration of what happens if there are no more tickets for sale 
+- getEventName() should return Taylor Swift 5 Dec
+- getEventSymbol() should return TS0512
+- getCategory() should return 1
+- getOriginalTicketPrice() should return 80
+- getCommissionFee() should return 10
+
+Ticket 2: (Taylor Swift 5 Dec, TS0512, 100, 2, 20, 2)
+
+2. **Minting tickets**
+using event organiser 1, Ticket 1:
+- mintTicket() individually
+- currentMintedTicketId() should return 1
+- mintTicket() again, show how theres a limit to the amount we can mint based on totalSupply
+- getCurrentTicketPrice(1) should return 90, the OriginalTicketPrice, will change if resale on secondary market
+- getCurrentTicketPrice(2) should give "This ticketId does not exist"
+- checkOriginalMinter(1) should return authenticity of the ticket == contract owner 
+- getOwnerOf(1) should return event organiser 1 address
+- getPrevOwner(1) should return address(0)
+
+Ticket 2:
+- bulkMintTickets(10)
+
+using any other address, mintTicket() will give "Only the Event Organiser can perform this action"
+
+3. **TicketMaster**
+- using event organiser 1, initialise TicketMaster([Ticket 1 address, Ticket 2 address])
+- getAllTicketAddresses() should return Ticket 1 address, Ticket 2 address
+- getSpecificTicketAddress(1) should return Ticket 1 address
+- getSpecificTicketAddress(2) should return Ticket 2 address
+- getSpecificTicketAddress(3) should throw error (to add the Invalid Category Number given check?)
+- findEventName() should return 'Taylor Swift 5 Dec'
+- findOwner(1,1) should return event organiser 1 address
+
+4. **Primary sale (using TicketMaster)**
+- using customer A, buyTicket(1) with 1000, "Insufficient ETH to purchase ticket" error, Show how need to put enough ethers to purchase
+- using customer A, buyTicket(1) with 1020
+- findOwner(1, uint256 ticketId) will give customer A address
+- using customer A, buyTicket(1), "No tickets for sale" error, Showcase what happens if no more tickets for sale
+- using customer A, buyTicket(3), "Invalid Category Number given" error
+- using customer B, buyTicket(2)
+
+5. **Secondary sale (using TicketMarketplace)**
+- using event organiser 1, initiate TicketMarketplace(TicketMaster address, 110, true), reselling is allowed
+- customer B listTicket(1000, 1, 1), show how we cannot list tickets we dont have  TODO: ownerOnly message?
+- customer A listTicket(1500, 1, 1), show how we cannot exceed the fair ticket pricing upperboundratio
+- customer A listTicket(1000, 1, 1), successfully listed ticket
+- customer B getTicketPrice(1, 1), Once list the ticket, check the ticket price with getTicketPrice 
+- customer B delistTicket(1,1), cannot delist the ticket (since he's not the owner of the ticket) 
+- customer B buyTicket(2,2), ticket not listed
+- customer B buyTicket(1,1), success
+
+- customer A listTicket(1000, 1, 1), cannot list because ticket is sold
+- customer A buyTicket(1, 1), Show that the ticket is unlisted by getting user A to try buying the ticket back from user B
+
 
 ## License
 
