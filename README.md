@@ -35,19 +35,11 @@ git clone https://github.com/Buwoo/IS4302-Ticketmaster.git
 
 #### Installing dependencies
 
+Use the package manager [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) to install npm and Node.js. Once npm and Node.js is installed, run the following code.
+
 ```bash
 cd IS4302-Ticketmaster
 npm install
-```
-
-#### Unit testing using Hardhat
-
-Use the package manager [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) to install npm and Node.js. Once npm and Node.js is installed, run the following code to install hardhat
-
-```bash
-npm init
-npm install --save-dev hardhat
-npx hardhat init
 ```
 
 ## Testing on Remix IDE
