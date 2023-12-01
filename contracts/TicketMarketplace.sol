@@ -32,24 +32,24 @@ contract TicketMarketplace is IERC721Receiver {
         _;
     }    
 
-    //check for ownership of a ticket
+    // check for ownership of a ticket
     modifier ownerOnly(uint256 categoryNr, uint256 ticketId) {
         Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
-        require(msg.sender == ticketContract.getOwnerOf(ticketId)); 
+        require(msg.sender == ticketContract.getOwnerOf(ticketId), "Only the owner of this ticketId can perform the function"); 
         _;
     }
 
-    //check for prev ownership of a ticket (specifically for delisting) 
+    // check for prev ownership of a ticket (specifically for delisting) 
     modifier prevOwnerOnly(uint256 categoryNr, uint256 ticketId) {
         Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
-        require(msg.sender == ticketContract.getPrevOwner(ticketId)); 
+        require(msg.sender == ticketContract.getPrevOwner(ticketId), "Only the previous owner of this ticketId can perform the function"); 
         _;
     }
 
     // check if ticket is listed 
     modifier ticketIsListed(uint256 categoryNr, uint256 ticketId) {
         Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
-        require(address(this) == ticketContract.getOwnerOf(ticketId)); 
+        require(address(this) == ticketContract.getOwnerOf(ticketId), "This ticket is currently not listed on the Marketplace"); 
         _;     
     }
 
@@ -82,8 +82,8 @@ contract TicketMarketplace is IERC721Receiver {
         address payable prevOwner = payable(ticketContract.getPrevOwner(ticketId)); 
         require(msg.sender != prevOwner, "Cannot buy back the ticket you've listed"); // Shouldnt be buy back, should just delist
         prevOwner.transfer(ticketPrice);
-        payable(msg.sender).transfer(msg.value - ticketPrice); //Return the excess Ether if too much was provided 
-        ticketContract.transferTicket(address(this), msg.sender, ticketId); //transfer ticket ownership from marketplace to purchasing party         
+        payable(msg.sender).transfer(msg.value - ticketPrice); // Return the excess Ether if too much was provided 
+        ticketContract.transferTicket(address(this), msg.sender, ticketId); // transfer ticket ownership from marketplace to purchasing party         
     }
 
     // Placeholder function to implement to ensure smart contract can receive NFT tokens 

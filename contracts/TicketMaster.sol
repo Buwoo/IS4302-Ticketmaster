@@ -26,6 +26,12 @@ contract TicketMaster { // a single event/concert
         return allTicketAddresses[categoryNr-1];
     }
 
+    // get original price + commission fee of a ticket category for primary sale
+    function getTicketPrice(uint256 categoryNr) public view returns(uint256) {
+        Ticket ticketContract = getSpecificTicketAddress(categoryNr);
+        return ticketContract.getTotalTicketPrice();
+    }
+
     function buyTicket(uint256 categoryNr) public payable {
         require(categoryNr > 0 && categoryNr <= allTicketAddresses.length, "Invalid Category Number given");
         Ticket ticketContract = getSpecificTicketAddress(categoryNr);

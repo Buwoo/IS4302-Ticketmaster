@@ -14,8 +14,9 @@ contract Ticket is ERC721 {
     uint256 lastSoldTicketId; // This Id <= currentMintedTicketId
     uint256 totalTicketSupply; 
     uint256 category; 
-    uint256 originalTicketPrice;
-    uint256 commissionFee;
+    uint256 originalTicketPrice; // in wei
+    uint256 commissionFee; // in wei
+    uint256 totalTicketPrice; // in wei
 
     // Extra information unique to each ticket 
     struct TicketInfo {
@@ -44,7 +45,8 @@ contract Ticket is ERC721 {
         totalTicketSupply = _totalTicketSupply; 
         category = _category; 
         originalTicketPrice = _originalTicketPrice;
-        commissionFee = _commissionFee; 
+        commissionFee = _commissionFee;
+        totalTicketPrice = originalTicketPrice + commissionFee;
     }
 
     modifier onlyEventOrganiser() {
@@ -59,23 +61,27 @@ contract Ticket is ERC721 {
 
     // Getter Functions
     function getEventName() public view returns (string memory) {
-        return eventName; 
+        return eventName;
     }
 
     function getEventSymbol() public view returns (string memory) {
-        return eventSymbol; 
+        return eventSymbol;
     }
 
     function getCategory() public view returns (uint256) {
-        return category; 
+        return category;
     }
 
     function getOriginalTicketPrice() public view returns (uint256) {
-        return originalTicketPrice; 
+        return originalTicketPrice;
     }
 
     function getCommissionFee() public view returns (uint256) {
-        return commissionFee; 
+        return commissionFee;
+    }
+
+    function getTotalTicketPrice() public view returns (uint256) {
+        return totalTicketPrice;
     }
 
     // to decide if we want to limit the usage of this function or make it public
@@ -141,7 +147,6 @@ contract Ticket is ERC721 {
 
     // Purchase ticket from the event organiser (official purchasing means)
     function buyTicket(address given_address) public payable {
-        uint256 totalTicketPrice = originalTicketPrice + commissionFee; 
         require(msg.value >= totalTicketPrice, "Insufficient ETH to purchase ticket"); 
         require(lastSoldTicketId < currentMintedTicketId, "No tickets for sale");
         lastSoldTicketId += 1;
