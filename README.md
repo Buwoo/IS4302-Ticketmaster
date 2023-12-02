@@ -49,7 +49,7 @@ npm install
 - customer A
 - customer B 
 
-note: the way we designed it, each Ticket, TicketMaster, and TicketMasterplace is for 1 event
+note: the way we designed it, each Ticket, TicketMaster, and TicketMarketplace is for 1 event
 
 **1. Create 2 Ticket contracts of different categories**
 
@@ -94,13 +94,17 @@ using any other address, mintTicket() will give "Only the Event Organiser can pe
 <br><br/>
 
 **4. Primary sale (using TicketMaster)**
-- using customer A, getTicketPrice(1) gives 100
-- using customer A, key in value 90, buyTicket(1), "Insufficient ETH to purchase ticket" error, Show how need to put enough ethers to purchase
-- using customer A, key in value 100, buyTicket(1), successful purchase
+
+using customer A:
+- getTicketPrice(1) gives 100
+- key in value 90, buyTicket(1), "Insufficient ETH to purchase ticket" error, Show how need to put enough ethers to purchase
+- key in value 100, buyTicket(1), successful purchase
 - findOwner(1, 1) will give customer A address
-- using customer A, key in value 100, buyTicket(1), "No tickets for sale" error, Showcase what happens if no more tickets for sale
-- using customer A, buyTicket(3), "Invalid Category Number given" error
-- using customer B, key in value 22, buyTicket(2), successful purchase
+- key in value 100, buyTicket(1), "No tickets for sale" error, Showcase what happens if no more tickets for sale
+- buyTicket(3), "Invalid Category Number given" error
+
+using customer B:
+- key in value 22, buyTicket(2), successful purchase
 <br><br/>
 
 **5. Secondary sale (using TicketMarketplace)**
