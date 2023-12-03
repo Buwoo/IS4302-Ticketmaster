@@ -129,7 +129,7 @@ contract Ticket is ERC721 {
 
     // Allow for the bulk minting of tickets 
     function bulkMintTickets(uint256 _nrOfTickets) onlyEventOrganiser public {
-        require(currentMintedTicketId + _nrOfTickets < totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
+        require(currentMintedTicketId + _nrOfTickets <= totalTicketSupply, "Cannot mint more tickets, total supply reached"); 
         for (uint i = 0; i < _nrOfTickets; i++) {
             mintTicket();
         }
