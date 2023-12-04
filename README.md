@@ -109,14 +109,14 @@ using customer B:
 
 **5. Secondary sale (using TicketMarketplace)**
 - using event organiser 1, initiate TicketMarketplace(TicketMaster address, 110, true), reselling is allowed
-- customer B listTicket(100, 1, 1), show how we cannot list tickets we dont have
+- customer B listTicket(95, 1, 1), show how we cannot list tickets we dont have
 - customer A listTicket(150, 1, 1), show how we cannot exceed the fair ticket pricing upperboundratio
-- customer A listTicket(100, 1, 1), successfully listed ticket
+- customer A listTicket(95, 1, 1), successfully listed ticket
 - customer B getTicketPrice(1, 1), Once list the ticket, check the ticket price with getTicketPrice 
 - customer B delistTicket(1,1), cannot delist the ticket (since he's not the owner of the ticket) 
 - customer B buyTicket(2,2), ticket not listed
 - customer B buyTicket(1,1), success
-- customer A listTicket(100, 1, 1), cannot list because ticket is sold
+- customer A listTicket(95, 1, 1), cannot list because ticket is sold
 - customer A buyTicket(1, 1), Show that the ticket is unlisted by getting user A to try buying the ticket back from user B
 
 
