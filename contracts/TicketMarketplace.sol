@@ -22,7 +22,7 @@ contract TicketMarketplace is IERC721Receiver {
     // check for FAIR ticket pricing
     modifier priceSufficient(uint256 askingPrice, uint256 categoryNr, uint256 ticketId) {
         Ticket ticketContract = TicketMasterContract.getSpecificTicketAddress(categoryNr);
-        require(askingPrice <= ticketContract.getOriginalTicketPrice()*(upperBoundRatio/100), "Reselling above price ceiling is not allowed");
+        require(askingPrice <= (ticketContract.getOriginalTicketPrice()*upperBoundRatio)/100, "Reselling above price ceiling is not allowed");
         _;
     }
 
